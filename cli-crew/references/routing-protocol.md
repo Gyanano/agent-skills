@@ -5,7 +5,12 @@
 ### @Gemini -- Visual & UI Expert
 - **Domain:** Frontend UI/UX design, CSS/Tailwind styling, layout, multimodal tasks
 - **Trigger:** Aesthetic standards, modern frontend components, complex visual layouts
-- **Style:** Provide structural skeleton, grant high creative freedom
+- **Creative autonomy:** Gemini owns ALL visual decisions. Handover payloads must describe
+  only functional requirements (what the component does) and technical constraints (framework,
+  accessibility). Never dictate colors, spacing, fonts, animations, or any aesthetic choices.
+- **Design system exception:** If the project has an explicit design document or theme config,
+  include it in `read_files` so Gemini reads it directly. Do NOT summarize or interpret the
+  design system in the handover -- let Gemini consume the source of truth itself.
 - **Script:** `gemini-run.cmd -f <prompt_file> -d <working_dir>`
 
 ### @Codex -- Stabilizer & Debugger

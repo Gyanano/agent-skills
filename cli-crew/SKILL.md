@@ -1,13 +1,7 @@
 ---
 name: cli-crew
 description: >
-  Multi-agent orchestrator that delegates tasks to external CLI agents (Gemini-CLI and Codex-CLI)
-  via a JSON handover protocol. Use this skill when: (1) a task involves frontend UI/UX design,
-  styling, or visual work -- delegate to @Gemini, (2) a task requires precise logic, bug fixing,
-  algorithm implementation, or strict refactoring -- delegate to @Codex, (3) a complex task can
-  be decomposed into sub-tasks for parallel or sequential execution across agents, (4) the user
-  explicitly mentions @Gemini, @Codex, or cli-crew. Claude acts as PM/Architect: breaking down
-  tasks, generating handover payloads, dispatching to agents, and assembling results.
+  Multi-agent orchestrator that delegates tasks to external CLI agents (Gemini-CLI and Codex-CLI) via a JSON handover protocol. Use this skill when: (1) a task involves frontend UI/UX design, styling, or visual work -- delegate to @Gemini, (2) a task requires precise logic, bug fixing, algorithm implementation, or strict refactoring -- delegate to @Codex, (3) a complex task can be decomposed into sub-tasks for parallel or sequential execution across agents, (4) the user explicitly mentions @Gemini, @Codex, or cli-crew. Claude acts as PM/Architect: breaking down tasks, generating handover payloads, dispatching to agents, and assembling results.
 ---
 
 # CLI Teams --Multi-Agent Orchestrator
@@ -49,12 +43,16 @@ On every invocation:
      "target_agent": "Gemini",
      "task_id": "gemini-navbar-01",
      "project_context": "Building a dashboard app with React + Tailwind",
-     "primary_objective": "Create a responsive navbar component with dark mode toggle",
+     "primary_objective": "Create a responsive navbar with: logo slot, navigation links, and a dark mode toggle button",
      "read_files": ["src/App.tsx", "src/styles/theme.css"],
      "write_target": "src/components/Navbar.tsx",
-     "strict_boundaries": ["Use Tailwind only", "Must be accessible (ARIA labels)"]
+     "strict_boundaries": ["Use Tailwind only", "Must be accessible (ARIA labels)", "Do not modify App.tsx"]
    }
    ```
+
+   **Reminder:** The `primary_objective` above describes only WHAT the component does, not how it
+   looks. No colors, no "modern/sleek/clean" adjectives, no layout aesthetics. Let Gemini decide
+   the visual design.
 
 3. **Dispatch** using the dispatch script. The cmd scripts (`gemini-run.cmd`, `codex-run.cmd`)
    are bundled in this skill's `scripts/` directory, so dispatch.py finds them automatically:
@@ -89,10 +87,24 @@ On every invocation:
 
 ## Prompt Crafting Rules
 
-**For @Gemini (high creative freedom):**
-- Provide structural skeleton and design intent
-- Specify tech stack constraints (e.g., "Tailwind only")
-- Let it make aesthetic decisions
+**For @Gemini (maximum creative autonomy):**
+
+Gemini is a top-tier visual designer. Your job is to tell it WHAT to build, never HOW it should look.
+
+- **DO** describe: component purpose, functional requirements, user interactions, tech stack
+- **DO NOT** describe: colors, fonts, spacing, shadows, gradients, border-radius, animations,
+  layout aesthetics, or any visual/style details
+- **DO NOT** include phrases like: "modern look", "sleek design", "clean UI", "minimalist style",
+  "with subtle shadow", "rounded corners", "smooth transition"
+- The `primary_objective` must be purely functional (e.g., "Create a navbar with logo, nav links,
+  and a dark mode toggle" -- NOT "Create a sleek navbar with a gradient background")
+- The `strict_boundaries` must contain only technical constraints (framework, accessibility,
+  file scope) -- never aesthetic directives
+
+**Exception:** If the project contains an explicit design system document (e.g., `DESIGN.md`,
+`style-guide.md`, Figma tokens, or theme config), reference that file in `read_files` and add
+a boundary like "Follow the design system in DESIGN.md". Do NOT paraphrase or interpret the
+design system yourself -- let Gemini read it directly.
 
 **For @Codex (rigid precision):**
 - One clear objective per dispatch
