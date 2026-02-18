@@ -16,8 +16,11 @@ to specialized external CLI agents and assemble their output.
 - Dispatch via cmd scripts, review output, integrate results
 - Handle architecture, system design, and final assembly yourself
 
-**ABSOLUTE RED LINE:** Never over-engineer. Never add unrequested features. Stick to the user's
-explicit request. Suppress scope creep ruthlessly.
+**ABSOLUTE RED LINES:**
+- Never over-engineer. Never add unrequested features. Stick to the user's explicit request.
+- **NEVER call `gemini`, `codex`, or any external CLI tool directly from Bash.** Always dispatch
+  through `dispatch.py`, which handles Windows/Bash compatibility internally. If dispatch fails,
+  do NOT attempt to invoke the CLI yourself -- report the error and handle the task yourself.
 
 ## Agent Routing
 
@@ -54,8 +57,9 @@ On every invocation:
    looks. No colors, no "modern/sleek/clean" adjectives, no layout aesthetics. Let Gemini decide
    the visual design.
 
-3. **Dispatch** using the dispatch script. The cmd scripts (`gemini-run.cmd`, `codex-run.cmd`)
-   are bundled in this skill's `scripts/` directory, so dispatch.py finds them automatically:
+3. **Dispatch** using `dispatch.py`. This is the **only** supported dispatch method.
+   The script handles Windows/Bash shell incompatibilities internally (uses `cmd.exe /c`
+   to run `.cmd` scripts, even when called from Bash):
 
    ```bash
    python "<skill_dir>/scripts/dispatch.py" .cli-crew-task.json \
@@ -69,14 +73,9 @@ On every invocation:
 
    Override script location with `--scripts-dir` if the cmd files are elsewhere.
 
-   Alternatively, call the bundled cmd scripts directly:
-   ```bash
-   # For Gemini
-   "<skill_dir>/scripts/gemini-run.cmd" -f <prompt_file> -d <working_dir> -t 600
-
-   # For Codex
-   "<skill_dir>/scripts/codex-run.cmd" -f <prompt_file> -d <working_dir> -t 600
-   ```
+   **WARNING:** Do NOT call `gemini-run.cmd` or `codex-run.cmd` directly from Bash.
+   `.cmd` files are Windows batch scripts and will fail in Bash. Always go through
+   `dispatch.py`.
 
 4. **Review** the agent's output against `strict_boundaries`. If violations found,
    re-dispatch with tighter constraints or fix locally.
@@ -119,6 +118,27 @@ separate `.cli-crew-task-<id>.json` files and parallel bash calls.
 
 ## Error Handling
 
-- If an agent times out (default 600s), retry once with a simpler prompt
-- If an agent produces output violating boundaries, fix it yourself rather than re-dispatching
-- If both agents fail on a task, handle it yourself and note the limitation
+**CRITICAL: On dispatch failure, NEVER attempt to call `gemini`, `codex`, or any external CLI
+tool directly.** Claude Code runs in a Bash shell on Windows, and `.cmd` scripts / Windows CLI
+tools will not work when invoked directly from Bash. The `dispatch.py` script is the only
+safe bridge.
+
+Failure response protocol:
+
+1. **`[DISPATCH_ERROR]` in output** -- `dispatch.py` prefixes all errors with this tag.
+   If you see it, do NOT retry the same command. Read the error message and act accordingly:
+   - "CLI not installed or not on PATH" -> Tell the user to install the CLI, then handle the task yourself
+   - "Script not found" -> Check that `<skill_dir>/scripts/` path is correct
+   - "Handover file not found" -> Check the JSON file was written to the correct location
+   - "Invalid JSON" -> Fix the JSON syntax and retry dispatch
+   - Non-zero exit code -> The agent ran but failed; read its output and decide next steps
+
+2. **Agent timeout** (default 600s) -> Retry once with a simpler, more focused prompt.
+   If it times out again, handle the task yourself.
+
+3. **Agent output violates boundaries** -> Fix it yourself rather than re-dispatching.
+
+4. **Both agents fail on a task** -> Handle it yourself and inform the user.
+
+5. **Any unexpected error** -> Report the error to the user, then complete the task yourself.
+   Never enter a retry loop. Never try to "work around" the dispatch by calling CLIs directly.
