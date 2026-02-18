@@ -11,6 +11,8 @@ Skills are reusable prompt-based extensions that give Claude Code domain-specifi
 | Skill | Description |
 |-------|-------------|
 | [cli-crew](./cli-crew/) | Multi-agent orchestrator that delegates tasks to Gemini-CLI and Codex-CLI via a structured JSON handover protocol |
+| [ios-style-designer](./ios-style-designer/) | Architects web interfaces following Apple's Human Interface Guidelines — glassmorphism, SF Pro typography, 8pt grid, adaptive Light/Dark mode |
+| [review-board](./review-board/) | Implementation review orchestrator for iterative project development — multi-role review of Spec objectives considering existing code and progress |
 
 ## Installation
 
@@ -31,11 +33,18 @@ Once installed, the skill is automatically loaded by Claude Code. You can invoke
 ```
 agent-skills/
 ├── README.md
-├── cli-crew/           # Multi-agent orchestrator skill
-│   ├── SKILL.md        # Skill definition (loaded by Claude Code)
-│   ├── references/     # Routing rules & JSON schema
-│   └── scripts/        # Dispatcher + CLI wrappers
-└── ...                 # More skills to come
+├── cli-crew/              # Multi-agent orchestrator skill
+│   ├── SKILL.md
+│   ├── README.md
+│   ├── references/        # Routing rules & JSON schema
+│   └── scripts/           # Dispatcher + CLI wrappers
+├── ios-style-designer/    # Apple HIG web design skill
+│   ├── SKILL.md
+│   └── README.md
+└── review-board/          # Iterative implementation review skill
+    ├── SKILL.md
+    ├── references/        # Role-specific prompts (Codex, Gemini)
+    └── scripts/           # Dispatcher + CLI wrappers
 ```
 
 ## Contributing
